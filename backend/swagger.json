@@ -1,0 +1,107 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "version": "0.0.0",
+      "title": "Shop API",
+      "description": "API testing for the shop"
+    },
+    "host": "localhost:3001",
+    "tags": [
+      {
+        "name": "store",
+        "description": "Inventory queries"
+      },
+      {
+        "name": "user",
+        "description": "User information"
+      }
+    ],
+    "paths": {
+      "/user/create": {
+        "post": {
+          "tags": [
+            "user"
+          ],
+          "summary": "Create a user",
+          "description": "",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "formData",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "in": "formData",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "User created"
+            },
+            "400": {
+              "description": "Username already exists"
+            }
+          },
+          "consumes": [
+            "application/x-www-form-urlencoded"
+          ]
+        }
+      },
+      "/user/login": {
+        "post": {
+          "tags": [
+            "user"
+          ],
+          "summary": "Login to user",
+          "description": "",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "formData",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "in": "formData",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Valid password"
+            },
+            "400": {
+              "description": "Invalid password"
+            }
+          },
+          "consumes": [
+            "application/x-www-form-urlencoded"
+          ]
+        }
+      },
+      "/user/verify": {
+        "get": {
+          "tags": [
+            "user"
+          ],
+          "summary": "Verify JWT once user has logged in",
+          "description": "",
+          "security": [],
+          "responses": {
+            "200": {
+              "description": "Valid"
+            },
+            "400": {
+              "description": "Invalid"
+            }
+          }
+        }
+      }
+    }
+  }
