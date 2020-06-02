@@ -7,7 +7,7 @@ var logger = require('morgan');
 const fs = require('fs');
 
 var multer  = require('multer');  // middleware for file uploading (multipart/form-data)
-var upload = multer({ dest: 'images/tmp/'});  // where images will be held
+var upload = multer({ dest: 'images/'});  // where images will be held
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -207,12 +207,11 @@ app.post('/user/login', (req, res) => {
  *          description: No cookie was removed
  */
 app.use('/user/logout', (req, res) => {
-  console.log(req.cookies.token)
-  if(req.cookies.token){
+  if(req.cookies.token){    // if cookie is there, remove and send 200 status
     res.clearCookie('token');
     res.sendStatus(200);
   } else {
-    res.sendStatus(400);
+    res.sendStatus(400);    // no token cookie present so error status is sent
   }
 })
 
