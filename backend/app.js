@@ -63,7 +63,7 @@ var private = 'pRiVaTeKeY'; // Can be set in .env and retrieved with process.env
 
 
 // mongoose - change once docker envionment is being setup (maybe?)
-// "C:\Program Files\MongoDB\Server\4.2\bin\mongo.exe" - start with admin privalidges
+// 'C:\Program Files\MongoDB\Server\4.2\bin\mongo.exe' - start with admin privalidges
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017', {useNewUrlParser: true, useUnifiedTopology: true});
 
@@ -127,7 +127,7 @@ app.post('/user/create', (req,res) => {
   var user = mongoose.model('User', userLoginSchema); // get database information
 
   user.findOne({username: req.body.username}, (err, data) => {    // find if there us already a username present, password verification can be done within react
-    if (err){console.log("error", err)} // if theres a error, show in console
+    if (err){console.log('error', err)} // if theres a error, show in console
     if (!data){ // if no duplicate is found, create username
       // TODO - Encryption of password?
       user.create({username: req.body.username, password: req.body.password}); // creates user
@@ -170,7 +170,7 @@ app.post('/user/login', (req, res) => {
   var user = mongoose.model('User', userLoginSchema); // get databse
 
   user.findOne({username: req.body.username}, (err, data) => {  // check if there is a username which the user has entered
-    if (err){console.log("error", err)} // if theres a error, show in console
+    if (err){console.log('error', err)} // if theres a error, show in console
     if (data.password==req.body.password){  // gets the password from the database linked to the username entered and checks if the password the user has entered is the one that is stored in the databse
       // set JWT and send
       var token = jwt.sign({
@@ -190,6 +190,32 @@ app.post('/user/login', (req, res) => {
     }
   });
 });
+
+// logout
+/**
+ *  @swagger
+ *  /user/logout:
+ *    get:
+ *      tags:
+ *        - user
+ *      description: Remove JWT cookie
+ *      security: []
+ *      responses:
+ *        200:
+ *          description: Removed cookie
+ *        400:
+ *          description: No cookie was removed
+ */
+app.use('/user/logout', (req, res) => {
+  console.log(req.cookies.token)
+  if(req.cookies.token){
+    res.clearCookie('token');
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
+})
+
 
 // decode token
 /**
@@ -264,8 +290,15 @@ app.use('/user/verify', (req, res) => {
  *          in: formData
  *          required: true
  *          type: string
+ *      responses:
+ *        200:
+ *          description: Added
+ *        400:
+ *          description: Not added
+ *      consumes:
+ *        - multipart/form-data
  */
-app.post('/shop/create', upload.single('image1'), (req, res) => {
+app.post('/shop/create', upload.single('image'), (req, res) => {
   console.log(req.file);
   
   
@@ -298,7 +331,24 @@ app.post('/shop/create', upload.single('image1'), (req, res) => {
 });
 
 // get list of items within the category
-
+/**
+ *  @swagger
+ *  /shop/category/{category}:
+ *    get:
+ *      tags:
+ *        - store
+ *      description: Get list of items from category
+ *      parameters:
+ *        - name: category name
+ *          in: path
+ *          required: true
+ *          type: string
+ *      responses:
+ *        200:  
+ *          description: Valid category
+ *        400:
+ *          description: Invalid category
+ */
 app.use('/shop/category/:category', (req, res) => {
   console.log(req.params.category);
   var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
