@@ -5,7 +5,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const fs = require('fs');
+
 var multer  = require('multer');  // middleware for file uploading (multipart/form-data)
+var upload = multer({ dest: 'images/tmp/'});  // where images will be held
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -26,35 +28,38 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/test', (req, res) => {
-  res.send(`
-  <form action="/shop/create" method="post" enctype="multipart/form-data">
-            <input type="file" name="avatar" multiple/>
-            <input type="submit" value="Submit" />
-        </form>
-  `)
-});
+app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 
-// swagger
+// swagger + swagger JSDoc
 const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('./swagger.json');
+
+const swaggerJSDoc = require('swagger-jsdoc');
+const options = {
+  definition: {
+    info: {
+      title: 'Shop API', // Title (required)
+      version: '1.0.0', // Version (required)
+    },
+  },
+  // Path to the API docs
+  apis: ['app.js'],
+};
+const swaggerSpec = swaggerJSDoc(options);
+
+app.get('/api-docs.json', (req, res) => { // to see the raw json if needed
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 app.use('/api-docs', swaggerUi.serve);
-app.get('/api-docs', swaggerUi.setup(swaggerDocument));
+app.get('/api-docs', swaggerUi.setup(swaggerSpec)); // show spec
+
 
 // jwt
 var jwt = require('jsonwebtoken');
 var private = 'pRiVaTeKeY'; // Can be set in .env and retrieved with process.env.KEY or whatever the string name is set to
-
-function verify(req,res,next) {
-  jwt.verify(req.cookies.token, private, (err, decoded) => {
-    if (!err){next();}
-    else {
-      res.status(400).send('verification failed')
-    };
-  });
-};
 
 
 // mongoose - change once docker envionment is being setup (maybe?)
@@ -80,6 +85,12 @@ var shopItemSchema = new mongoose.Schema({
   seller: String        // to see who is selling item
 });
 
+var base64ImageSchema = new mongoose.Schema({
+  base64: String,       // the image is stored as base64
+  owner: String,        // which item shop the image is linked to
+  mimetype: String      // what type of file it is (png/jpg)
+})
+
 // connecting to localhost mongodbfgdhayeh
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -88,6 +99,30 @@ db.once('open', function() {
 });
 
 // create user
+/**
+ *  @swagger
+ *  /user/create:
+ *    post:
+ *      tags:
+ *        - user
+ *      description: Create a user
+ *      parameters:
+ *        - name: username
+ *          in: formData
+ *          description:  Username to use for login
+ *          required: true
+ *        - name: password
+ *          in: formData
+ *          description:  Username to use for login
+ *          required: true
+ *      responses:
+ *        200:
+ *          description: User created
+ *        400:
+ *          description: Username already exists 
+ *      consumes:
+ *        - application/x-www-form-urlencoded
+ */
 app.post('/user/create', (req,res) => {
   var user = mongoose.model('User', userLoginSchema); // get database information
 
@@ -103,7 +138,33 @@ app.post('/user/create', (req,res) => {
   });
 });
 
+
 // login
+/**
+ *  @swagger
+ *  /user/login:
+ *    post:
+ *      tags:
+ *        - user
+ *      description: Login to user
+ *      parameters:
+ *        - name: username
+ *          in: formData
+ *          description:  Username to use for login
+ *          required: true
+ *        - name: password
+ *          in: formData
+ *          description:  Username to use for login
+ *          required: true
+ *      responses:
+ *        200:
+ *          description: Valid login details
+ *        400:
+ *          description: Invalid password 
+ *      consumes:
+ *        - application/x-www-form-urlencoded
+ */
+
 app.post('/user/login', (req, res) => {
   console.log(req.body)
   var user = mongoose.model('User', userLoginSchema); // get databse
@@ -130,6 +191,21 @@ app.post('/user/login', (req, res) => {
   });
 });
 
+// decode token
+/**
+ *  @swagger
+ *  /user/verify:
+ *    get:
+ *      tags:
+ *        - user
+ *      description: Verify JWT and get decoded message
+ *      security: []
+ *      responses:
+ *        200:
+ *          description: Valid
+ *        400:
+ *          description: Invalid
+ */
 app.use('/user/verify', (req, res) => {
   // get token and see if the token is valid so that the user can continue with their action
   jwt.verify(req.cookies.token, private, (err, decoded) => {
@@ -140,38 +216,98 @@ app.use('/user/verify', (req, res) => {
   })
 });
 
-var upload = multer({ dest: 'images/'})
+
 
 // multipart/form-data so needs multer
+// Swagger is unable to send array of images so must stick with .single for testing purposes
+/**
+ *  @swagger
+ *  /shop/create:
+ *    post:
+ *      tags:
+ *        - store
+ *      description: Add item to store
+ *      parameters:
+ *        - name: name
+ *          in: formData
+ *          required: true
+ *          type: string
+ *        - name: description
+ *          in: formData
+ *          required: true
+ *          type: string
+ *        - name: category
+ *          in: formData
+ *          required: true
+ *          type: string
+ *          enum: ['PS4', 'xBox', 'PC']
+ *        - name: price
+ *          in: formData
+ *          required: true
+ *          type: number
+ *          description: in pence e.g. 100 = £1.00
+ *        - name: image
+ *          in: formData
+ *          required: true
+ *          type: file
+ *        - name: tags
+ *          in: formData
+ *          required: true
+ *          type: array
+ *          items:
+ *            type: string
+ *        - name: hidden
+ *          in: formData
+ *          required: true
+ *          type: boolean
+ *        - name: author
+ *          in: formData
+ *          required: true
+ *          type: string
+ */
 app.post('/shop/create', upload.single('image1'), (req, res) => {
-  console.log('dasdasdas')
   console.log(req.file);
-  console.log(req.body);
-  res.sendStatus(200);
-
-  /*
-  // get id so that we can save the images locally
+  
+  
+  var img = fs.readFileSync(req.file.path);
+  
+  // unique ID for the image that has to be stored into the imageURL array also in the product
   id = new mongoose.Types.ObjectId();
-  fs.mkdir('/images/'+id, (err) => {
-    if (err) {console.log(err);}
+  var image = mongoose.model('images', base64ImageSchema);
+  image.create({
+    base64: img.toString('base64'),
+    mimetype: req.file.mimetype,
+    _id: id
   });
-
 
   // add item to shop
   var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
-
+  
   shop.create({
     name: req.body.name,
     description: req.body.description,
     category: req.body.category,
     price: req.body.price,
+    imageURL: [id],   // append more ids but this is for a single image for now due to Swagger limitations
     tags: req.body.tags,
     hidden: req.body.hidden,
     seller: req.body.seller,
-    _id: id
+  });
+
+  res.sendStatus(200);
+});
+
+// get list of items within the category
+
+app.use('/shop/category/:category', (req, res) => {
+  console.log(req.params.category);
+  var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
+  shop.find({category: req.params.category}, (err, docs) => {
+    if (err) {console.log(err)};
+    console.log(docs);
   })
-  */
-})
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -180,6 +180,29 @@
         "consumes": [
           "multipart/form-data"
         ]
+      },
+      "get": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Get list from category",
+        "description": "",
+        "parameters": [
+          {
+            "name": "category name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valid"
+          },
+          "400": {
+            "description": "Invalid"
+          }
+        }
       }
     }
   }
