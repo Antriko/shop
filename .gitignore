@@ -1,3 +1,6 @@
+# temp images
+backend/images/
+
 # Logs
 logs
 *.log
