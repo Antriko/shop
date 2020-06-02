@@ -338,10 +338,11 @@ app.post('/shop/create', upload.single('image'), (req, res) => {
  *        - store
  *      description: Get list of items from category
  *      parameters:
- *        - name: category name
+ *        - name: category
  *          in: path
  *          required: true
- *          type: string
+ *          schema:
+ *            type: string
  *      responses:
  *        200:  
  *          description: Valid category
@@ -355,7 +356,40 @@ app.use('/shop/category/:category', (req, res) => {
     if (err) {console.log(err)};
     console.log(docs);
   })
+  res.sendStatus(200);
 });
+
+// get item information
+/**
+ *  @swagger
+ *  /shop/item/{id}:
+ *    get:
+ *      tags:
+ *        - store
+ *      description: Get information of item from the ID
+ *      parameters:
+ *        - name: id
+ *          in: path
+ *          required: true
+ *          schema:
+ *            type: string
+ *      responses:
+ *        200:  
+ *          description: Valid item
+ *        400:
+ *          description: Invalid item
+ */
+app.use('/shop/item/:id', (req, res) => {
+  var shop = mongoose.model('Shop', shopItemSchema);
+  shop.findOne({_id: req.params.id}, (err, docs) => {
+    console.log(docs);
+    if (docs) { // if item is found, send the item information
+      res.status(200).send(docs);
+    } else {    // if no item is there, send 400
+      res.sendStatus(400);
+    }
+  })
+})
 
 
 // catch 404 and forward to error handler
