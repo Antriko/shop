@@ -64,6 +64,7 @@ var private = 'pRiVaTeKeY'; // Can be set in .env and retrieved with process.env
 
 // mongoose - change once docker envionment is being setup (maybe?)
 // 'C:\Program Files\MongoDB\Server\4.2\bin\mongo.exe' - start with admin privalidges
+// mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017', {useNewUrlParser: true, useUnifiedTopology: true});
 
@@ -131,9 +132,9 @@ app.post('/user/create', (req,res) => {
     if (!data){ // if no duplicate is found, create username
       // TODO - Encryption of password?
       user.create({username: req.body.username, password: req.body.password}); // creates user
-      res.status(200).send('User created'); // tells frontend that it has processed
+      res.sendStatus(200); // tells frontend that it has processed
     } else {
-      res.status(400).send('Username already exists');  // tells frontend that the username is already taken
+      res.sendStatus(400);  // tells frontend that the username is already taken
     };
   });
 });
@@ -184,9 +185,9 @@ app.post('/user/login', (req, res) => {
         httpOnly: true
       })
 
-      res.status(200).send('Correct password'); // tells frontend that login was successful
+      res.sendStatus(200); // tells frontend that login was successful
     } else {
-      res.status(400).send('Incorrect password'); // tells frontend password is incorrect
+      res.sendStatus(400); // tells frontend password is incorrect
     }
   });
 });
@@ -234,9 +235,13 @@ app.use('/user/logout', (req, res) => {
 app.use('/user/verify', (req, res) => {
   // get token and see if the token is valid so that the user can continue with their action
   jwt.verify(req.cookies.token, private, (err, decoded) => {
-    if (err){res.status(400).send('invalid');console.log(err); return;};  // if token is invalid, tell frontend that
+    if (err) { // if token is invalid, tell frontend that
+      res.sendStatus(400);
+      console.log(err);
+    };
     if (decoded) {  // get the data from the JWT so that 
-      res.status(200).send(decoded);  // tells frontend that the JWT is valid
+      console.log(decoded);
+      res.status(200).send(decoded);  // tells frontend that the JWT is valid and send the decoded message
     }
   })
 });
@@ -285,10 +290,6 @@ app.use('/user/verify', (req, res) => {
  *          in: formData
  *          required: true
  *          type: boolean
- *        - name: author
- *          in: formData
- *          required: true
- *          type: string
  *      responses:
  *        200:
  *          description: Added
@@ -299,34 +300,37 @@ app.use('/user/verify', (req, res) => {
  */
 app.post('/shop/create', upload.single('image'), (req, res) => {
   console.log(req.file);
-  
-  
   var img = fs.readFileSync(req.file.path);
   
   // unique ID for the image that has to be stored into the imageURL array also in the product
-  id = new mongoose.Types.ObjectId();
-  var image = mongoose.model('images', base64ImageSchema);
-  image.create({
-    base64: img.toString('base64'),
-    mimetype: req.file.mimetype,
-    _id: id
-  });
-
-  // add item to shop
-  var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
-  
-  shop.create({
-    name: req.body.name,
-    description: req.body.description,
-    category: req.body.category,
-    price: req.body.price,
-    imageURL: [id],   // append more ids but this is for a single image for now due to Swagger limitations
-    tags: req.body.tags,
-    hidden: req.body.hidden,
-    seller: req.body.seller,
-  });
-
-  res.sendStatus(200);
+  if (req.cookies.token) {
+    jwt.verify(req.cookies.token, private, (err, decoded) => {
+      id = new mongoose.Types.ObjectId();
+      var image = mongoose.model('images', base64ImageSchema);
+      image.create({
+        base64: img.toString('base64'),
+        mimetype: req.file.mimetype,
+        _id: id
+      });
+    
+      // add item to shop
+      var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
+      
+      shop.create({
+        name: req.body.name,
+        description: req.body.description,
+        category: req.body.category,
+        price: req.body.price,
+        imageURL: [id],   // append more ids but this is for a single image for now due to Swagger limitations
+        tags: req.body.tags,
+        hidden: req.body.hidden,
+        seller: decoded.data.username,  // whatever the user is logged in as while registering the item
+      });
+    });
+    res.sendStatus(200);
+  } else { 
+    res.sendStatus(400); // not logged in so no seller can be set
+  }
 });
 
 // get list of items within the category
@@ -388,8 +392,133 @@ app.use('/shop/item/:id', (req, res) => {
     } else {    // if no item is there, send 400
       res.sendStatus(400);
     }
+  });
+});
+
+// get items from seller
+/**
+ *  @swagger
+ *  /shop/user/{seller}:
+ *    post:
+ *      tags:
+ *        - store
+ *      description: Get items from seller
+ *      parameters:
+ *        - name: seller
+ *          in: path
+ *          required: true
+ *          schema:
+ *            type: string
+ *      responses:
+ *        200:  
+ *          description: Valid seller
+ *        400:
+ *          description: Invalid seller
+ */
+app.post('/shop/user/:seller', (req, res) => {
+  var shop = mongoose.model('Shop', shopItemSchema);
+  console.log(req.params.seller)
+  shop.find({seller: req.params.seller}, (err, docs) => {
+    console.log(docs);
+    if (docs) { // if items from seller are found, send the item information
+      res.status(200).send(docs);
+    } else {    // if invalid seller, send 400
+      res.sendStatus(400);
+    }
   })
-})
+});
+
+
+// alter item if you are logged in as author
+/**
+ *  @swagger
+ *  /shop/edit/{id}:
+ *    post:
+ *      tags:
+ *        - store
+ *      description: Edit item
+ *      parameters:
+ *        - name: id
+ *          in: path
+ *          required: true
+ *          schema:
+ *            type: string
+ *        - name: name
+ *          in: formData
+ *          required: false
+ *          type: string
+ *        - name: description
+ *          in: formData
+ *          required: false
+ *          type: string
+ *        - name: category
+ *          in: formData
+ *          required: false
+ *          type: string
+ *          enum: ['PS4', 'xBox', 'PC']
+ *        - name: price
+ *          in: formData
+ *          required: false
+ *          type: number
+ *          description: in pence e.g. 100 = £1.00
+ *        - name: image
+ *          in: formData
+ *          required: false
+ *          type: file
+ *        - name: tags
+ *          in: formData
+ *          required: false
+ *          type: array
+ *          items:
+ *            type: string
+ *        - name: hidden
+ *          in: formData
+ *          required: false
+ *          type: boolean
+ *      responses:
+ *        200:  
+ *          description: Item changes saved
+ *        400:
+ *          description: Item changes not saved
+ */
+app.post('/shop/edit/:id', upload.single('image'), (req, res) => {
+  console.log(req.file);
+  console.log(req.body);
+  update = JSON.parse(JSON.stringify(req.body))
+  try {
+
+    if (req.file) {
+      var img = fs.readFileSync(req.file.path);
+      var id = new mongoose.Types.ObjectId();
+      var image = mongoose.model('images', base64ImageSchema);
+      image.create({
+        base64: img.toString('base64'),
+        mimetype: req.file.mimetype,
+        _id: id
+      });
+      
+      update.imageURL = [id];
+    }
+  } catch(e) {console.log(e)}
+    
+  console.log('update: ', update)
+  // validate that user is logged in as seller
+  console.log(req.cookies.token);
+
+  if (req.cookies.token) {
+    var shop = mongoose.model('Shop', shopItemSchema);
+    shop.updateOne({_id: req.params.id}, update, (err) => {
+      if(err){
+        console.log(err)
+      }
+    });
+    
+    //shop.updateOne({_id: req.params.id}, update)
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400) // not logged in, no permission
+  }
+});
 
 
 // catch 404 and forward to error handler
