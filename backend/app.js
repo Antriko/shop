@@ -32,6 +32,11 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 
+// enable all cors requests
+const cors = require('cors');
+app.use(cors());
+
+
 // swagger + swagger JSDoc
 const swaggerUi = require('swagger-ui-express');
 

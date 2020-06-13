@@ -1,26 +1,54 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import axios from 'axios';
+import Navbar from './components/navbar/navbar.js';
+import {
+  BrowserRouter as Router,
+  Route,
+} from "react-router-dom";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+import indexPage from './components/pages/index/index.js';
+import loginPage from './components/pages/user/login.js';
 
-export default App;
+import { Form } from 'react-bootstrap';
+
+export default class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {   
+      userData: {},                        
+      isLogged: false
+    }
+  };
+
+  componentDidMount() {
+    axios.get('http://localhost:3000/verify')
+      .then(res => {
+        console.log(res);
+      })
+      .catch(e => {console.log(e)})
+  }
+
+  login(event) {
+    console.log('ok')
+    event.preventDeafult();
+  }
+
+  render() {
+    console.log(this.state)
+    return (
+      <div className="App">
+        <Navbar isLogged={this.state.isLogged}/>
+
+        <Router>
+        <Route exact path="/" component={indexPage} />
+        <Route exact path="/login" component={loginPage} />
+        </Router>
+
+        <Form onSubmit={this.login}>
+
+        </Form>
+      </div>
+    );
+  }
+};
