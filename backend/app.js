@@ -18,6 +18,10 @@ require('dotenv').config({
   path: '../.env'
 });
 
+// enable all cors requests
+const cors = require('cors');
+app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -32,9 +36,6 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 
-// enable all cors requests
-const cors = require('cors');
-app.use(cors());
 
 
 // swagger + swagger JSDoc
@@ -187,10 +188,9 @@ app.post('/user/login', (req, res) => {
       }, private);
 
       res.cookie('token', token, {  // save to frontend as cookie
-        httpOnly: true
-      })
-
-      res.sendStatus(200); // tells frontend that login was successful
+        Only: true
+      }).sendStatus(200);
+      // tells frontend that login was successful
     } else {
       res.sendStatus(400); // tells frontend password is incorrect
     }
@@ -213,7 +213,9 @@ app.post('/user/login', (req, res) => {
  *          description: No cookie was removed
  */
 app.use('/user/logout', (req, res) => {
+  console.log('logging out')
   if(req.cookies.token){    // if cookie is there, remove and send 200 status
+    console.log('clearing token')
     res.clearCookie('token');
     res.sendStatus(200);
   } else {
@@ -238,15 +240,15 @@ app.use('/user/logout', (req, res) => {
  *          description: Invalid
  */
 app.use('/user/verify', (req, res) => {
+  console.log(req.cookies.token)
   // get token and see if the token is valid so that the user can continue with their action
   jwt.verify(req.cookies.token, private, (err, decoded) => {
     if (err) { // if token is invalid, tell frontend that
       res.sendStatus(400);
-      console.log(err);
     };
     if (decoded) {  // get the data from the JWT so that 
-      console.log(decoded);
-      res.status(200).send(decoded);  // tells frontend that the JWT is valid and send the decoded message
+      console.log(decoded.data);
+      res.status(200).send(decoded.data);  // tells frontend that the JWT is valid and send the decoded message
     }
   })
 });
