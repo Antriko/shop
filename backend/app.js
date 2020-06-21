@@ -240,14 +240,12 @@ app.use('/user/logout', (req, res) => {
  *          description: Invalid
  */
 app.use('/user/verify', (req, res) => {
-  console.log(req.cookies.token)
   // get token and see if the token is valid so that the user can continue with their action
   jwt.verify(req.cookies.token, private, (err, decoded) => {
     if (err) { // if token is invalid, tell frontend that
       res.sendStatus(400);
     };
     if (decoded) {  // get the data from the JWT so that 
-      console.log(decoded.data);
       res.status(200).send(decoded.data);  // tells frontend that the JWT is valid and send the decoded message
     }
   })

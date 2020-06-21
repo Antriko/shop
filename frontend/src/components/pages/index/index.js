@@ -1,6 +1,6 @@
 import React from "react";
 
-const indexPage = props => {
+const indexPage = () => {
     return(<React.Fragment>
         hello this is index
     </React.Fragment>)

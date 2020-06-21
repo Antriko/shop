@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Navbar, Nav, NavDropdown, InputGroup, FormControl, Button } from 'react-bootstrap';
 import { Link } from "react-router-dom";
 import "./navbar.css";
+import { UserContext } from '../../userContext';
 
-const Navigationbar = props => {    
-    var user = (props.data.isLogged) ? <React.Fragment>
-                                            <NavDropdown title={props.data.userData.username}>
+const Navigationbar = () => {    
+    const { user } = useContext(UserContext);
+    var userNav = (user.isLogged) ? <React.Fragment>
+                                            <NavDropdown title={user.userdata.username}>
                                                 <Link className="dropdown-item" to="/profile">Profile</Link>
                                                 <NavDropdown.Divider />
                                                 <Link className="dropdown-item" to="/logout">Log out</Link>
@@ -42,7 +44,7 @@ const Navigationbar = props => {
         
         <Navbar.Collapse>
             <Nav>
-                {user}
+                {userNav}
                 <Link to="/basket" className="nav-link ml-4">Basket</Link>
             </Nav>
         </Navbar.Collapse>
