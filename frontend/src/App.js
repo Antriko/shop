@@ -8,8 +8,13 @@ import {
 import indexPage from './components/pages/index/index.js';
 import loginPage from './components/pages/user/login.js';
 import logoutPage from './components/pages/user/logout.js';
+import categoryPage from './components/pages/shop/category.js';
+import categoryList from './components/pages/shop/categoryList.js'
+import shopItem from './components/pages/shop/item.js'
+
 import { UserContext } from './userContext.js';
 import axios from "axios";
+import { Container } from 'react-bootstrap';
 
 function App() {
     const [user, setUser] = useState({userdata: {}, isLogged: false});
@@ -24,7 +29,7 @@ function App() {
                     console.log(res.data)
                     setUser({userdata: res.data, isLogged: true});
                 })
-                .catch(e => {
+                .catch(e => {   
                     console.log(e)
                 })
             };
@@ -35,14 +40,20 @@ function App() {
     const value = useMemo(() => ({ user, setUser }), [user, setUser]);
         return (
             <div className="App">
-                <Router>
-                    <UserContext.Provider value={value}>
-                        <Navigationbar />
-                        <Route exact path="/" component={indexPage} />
-                        <Route exact path="/login" component={loginPage} />
-                        <Route exact path="/logout" component={logoutPage} />
-                    </UserContext.Provider>
-                </Router>
+                    <Router>
+                        <UserContext.Provider value={value}>
+                            <Navigationbar />
+                            <Container>
+                                <Route exact path="/" component={indexPage} />
+                                <Route exact path="/login" component={loginPage} />
+                                <Route exact path="/logout" component={logoutPage} />
+
+                                <Route exact path="/category/" component={categoryPage} />
+                                <Route exact path="/category/:category" component={categoryList} />
+                                <Route exact path="/shop/:id" component={shopItem} />
+                            </Container>
+                        </UserContext.Provider>
+                    </Router>
 
             </div>
         );

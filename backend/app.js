@@ -275,7 +275,7 @@ app.use('/user/verify', (req, res) => {
  *          in: formData
  *          required: true
  *          type: string
- *          enum: ['PS4', 'xBox', 'PC']
+ *          enum: ['PS4', 'XBOX', 'PC']
  *        - name: price
  *          in: formData
  *          required: true
@@ -310,14 +310,7 @@ app.post('/shop/create', upload.single('image'), (req, res) => {
   // unique ID for the image that has to be stored into the imageURL array also in the product
   if (req.cookies.token) {
     jwt.verify(req.cookies.token, private, (err, decoded) => {
-      id = new mongoose.Types.ObjectId();
-      var image = mongoose.model('images', base64ImageSchema);
-      image.create({
-        base64: img.toString('base64'),
-        mimetype: req.file.mimetype,
-        _id: id
-      });
-    
+
       // add item to shop
       var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
       
@@ -326,7 +319,10 @@ app.post('/shop/create', upload.single('image'), (req, res) => {
         description: req.body.description,
         category: req.body.category,
         price: req.body.price,
-        imageURL: [id],   // append more ids but this is for a single image for now due to Swagger limitations
+        imageURL: [{
+            base64: img.toString('base64'), 
+            mimetype: req.file.mimetype
+        }],   // append more images but this is for a single image for now due to Swagger limitations
         tags: req.body.tags,
         hidden: req.body.hidden,
         seller: decoded.data.username,  // whatever the user is logged in as while registering the item
@@ -363,10 +359,37 @@ app.use('/shop/category/:category', (req, res) => {
   var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
   shop.find({category: req.params.category}, (err, docs) => {
     if (err) {console.log(err)};
+    res.status(200).send(docs);
     console.log(docs);
   })
-  res.sendStatus(200);
 });
+
+// get list of categories
+/**
+ *  @swagger
+ *  /shop/category:
+ *      get:
+ *          tags:
+ *              - store
+ *          description: Get the list of categories
+ *      responses:
+ *        200:  
+ *          description: Valid category
+ *        400:
+ *          description: Invalid category
+ */
+app.use('/shop/category', (req, res) => {
+    var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
+    shop.find({}, {category:1, _id:0}, (err, docs) => {
+        let tmp = [];
+        docs.forEach(element => {   // move from json to string
+            tmp.push(element.category);
+        });
+        data = [...new Set(tmp)];   // remove duplicates
+        res.status(200).send(data);
+    });
+});
+
 
 // get item information
 /**
@@ -391,7 +414,6 @@ app.use('/shop/category/:category', (req, res) => {
 app.use('/shop/item/:id', (req, res) => {
   var shop = mongoose.model('Shop', shopItemSchema);
   shop.findOne({_id: req.params.id}, (err, docs) => {
-    console.log(docs);
     if (docs) { // if item is found, send the item information
       res.status(200).send(docs);
     } else {    // if no item is there, send 400
@@ -460,7 +482,7 @@ app.post('/shop/user/:seller', (req, res) => {
  *          in: formData
  *          required: false
  *          type: string
- *          enum: ['PS4', 'xBox', 'PC']
+ *          enum: ['PS4', 'XBOX', 'PC']
  *        - name: price
  *          in: formData
  *          required: false
