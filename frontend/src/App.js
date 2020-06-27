@@ -8,6 +8,8 @@ import {
 import indexPage from './components/pages/index/index.js';
 import loginPage from './components/pages/user/login.js';
 import logoutPage from './components/pages/user/logout.js';
+import basketPage from './components/pages/user/basket.js'
+
 import categoryPage from './components/pages/shop/category.js';
 import categoryList from './components/pages/shop/categoryList.js'
 import shopItem from './components/pages/shop/item.js'
@@ -17,7 +19,7 @@ import axios from "axios";
 import { Container } from 'react-bootstrap';
 
 function App() {
-    const [user, setUser] = useState({userdata: {}, isLogged: false});
+    const [user, setUser] = useState({userdata: {basket:[]}, isLogged: false});
 
     // FIXME Sometimes sends multiple requests to server when refreshing???
     useEffect(() => {
@@ -51,6 +53,8 @@ function App() {
                                 <Route exact path="/category/" component={categoryPage} />
                                 <Route exact path="/category/:category" component={categoryList} />
                                 <Route exact path="/shop/:id" component={shopItem} />
+
+                                <Route exact path="/basket" component={basketPage} />
                             </Container>
                         </UserContext.Provider>
                     </Router>

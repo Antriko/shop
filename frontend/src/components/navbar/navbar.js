@@ -6,6 +6,16 @@ import { UserContext } from '../../userContext';
 
 const Navigationbar = () => {    
     const { user } = useContext(UserContext);
+
+    function totalBasket() {
+        var total = 0;
+        for (var i=0; i<user.userdata.basket.length; i++) {
+            total = total + user.userdata.basket[i][1];
+            console.log(user.userdata.basket[i][1])
+        }
+        return total;
+    }
+
     var userNav = (user.isLogged) ? <React.Fragment>
                                             <NavDropdown title={user.userdata.username}>
                                                 <Link className="dropdown-item" to="/profile">Profile</Link>
@@ -45,7 +55,7 @@ const Navigationbar = () => {
         <Navbar.Collapse>
             <Nav>
                 {userNav}
-                <Link to="/basket" className="nav-link ml-4">Basket</Link>
+                <Link to="/basket" className="nav-link ml-4">Basket - {totalBasket()}</Link>
             </Nav>
         </Navbar.Collapse>
 

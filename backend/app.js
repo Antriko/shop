@@ -78,7 +78,8 @@ mongoose.connect('mongodb://localhost:27017', {useNewUrlParser: true, useUnified
 // creating Schemas
 var userLoginSchema = new mongoose.Schema({
   username: String,
-  password: String
+  password: String,
+  basket: Array
 });
 
 var shopItemSchema = new mongoose.Schema({
@@ -137,7 +138,7 @@ app.post('/user/create', (req,res) => {
     if (err){console.log('error', err)} // if theres a error, show in console
     if (!data){ // if no duplicate is found, create username
       // TODO - Encryption of password?
-      user.create({username: req.body.username, password: req.body.password}); // creates user
+      user.create({username: req.body.username, password: req.body.password, basket: []}); // creates user
       res.sendStatus(200); // tells frontend that it has processed
     } else {
       res.sendStatus(400);  // tells frontend that the username is already taken
@@ -183,7 +184,8 @@ app.post('/user/login', (req, res) => {
       var token = jwt.sign({
         data: {
           id: data._id, 
-          username: data.username
+          username: data.username,
+          basket: data.basket
         }
       }, private);
 
