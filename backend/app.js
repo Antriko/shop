@@ -43,14 +43,14 @@ const swaggerUi = require('swagger-ui-express');
 
 const swaggerJSDoc = require('swagger-jsdoc');
 const options = {
-  definition: {
-    info: {
-      title: 'Shop API', // Title (required)
-      version: '1.0.0', // Version (required)
+    definition: {
+        info: {
+        title: 'Shop API', // Title (required)
+        version: '1.0.0', // Version (required)
+        },
     },
-  },
-  // Path to the API docs
-  apis: ['app.js'],
+    // Path to the API docs
+    apis: ['app.js'],
 };
 const swaggerSpec = swaggerJSDoc(options);
 
@@ -77,33 +77,33 @@ mongoose.connect('mongodb://localhost:27017', {useNewUrlParser: true, useUnified
 
 // creating Schemas
 var userLoginSchema = new mongoose.Schema({
-  username: String,
-  password: String,
-  basket: Array
+    username: String,
+    password: String,
+    basket: Array
 });
 
 var shopItemSchema = new mongoose.Schema({
-  name: String,
-  description: String,  
-  category: String,     // add searchability
-  price: Number,        // price in pence e.g. 150 = £1.50
-  imageURL: Array,      // can hold more than one image of the product
-  tags: Array,          // add more searchability
-  hidden: Boolean,      // to hide from store
-  seller: String        // to see who is selling item
+    name: String,
+    description: String,  
+    category: String,     // add searchability
+    price: Number,        // price in pence e.g. 150 = £1.50
+    imageURL: Array,      // can hold more than one image of the product
+    tags: Array,          // add more searchability
+    hidden: Boolean,      // to hide from store
+    seller: String        // to see who is selling item
 });
 
 var base64ImageSchema = new mongoose.Schema({
-  base64: String,       // the image is stored as base64
-  owner: String,        // which item shop the image is linked to
-  mimetype: String      // what type of file it is (png/jpg)
+    base64: String,       // the image is stored as base64
+    owner: String,        // which item shop the image is linked to
+    mimetype: String      // what type of file it is (png/jpg)
 })
 
 // connecting to localhost mongodbfgdhayeh
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
-  console.log('connected')
+    console.log('connected')
 });
 
 // create user
@@ -133,17 +133,16 @@ db.once('open', function() {
  */
 app.post('/user/create', (req,res) => {
   var user = mongoose.model('User', userLoginSchema); // get database information
-
-  user.findOne({username: req.body.username}, (err, data) => {    // find if there us already a username present, password verification can be done within react
-    if (err){console.log('error', err)} // if theres a error, show in console
-    if (!data){ // if no duplicate is found, create username
-      // TODO - Encryption of password?
-      user.create({username: req.body.username, password: req.body.password, basket: []}); // creates user
-      res.sendStatus(200); // tells frontend that it has processed
-    } else {
-      res.sendStatus(400);  // tells frontend that the username is already taken
-    };
-  });
+    user.findOne({username: req.body.username}, (err, data) => {    // find if there us already a username present, password verification can be done within react
+        if (err){console.log('error', err)} // if theres a error, show in console
+        if (!data){ // if no duplicate is found, create username
+            // TODO - Encryption of password?
+            user.create({username: req.body.username, password: req.body.password, basket: []}); // creates user
+            res.sendStatus(200); // tells frontend that it has processed
+        } else {
+            res.sendStatus(400);  // tells frontend that the username is already taken
+        };
+    });
 });
 
 
@@ -178,25 +177,25 @@ app.post('/user/login', (req, res) => {
   var user = mongoose.model('User', userLoginSchema); // get databse
 
   user.findOne({username: req.body.username}, (err, data) => {  // check if there is a username which the user has entered
-    if (err){console.log('error', err)} // if theres a error, show in console
-    if (data.password==req.body.password){  // gets the password from the database linked to the username entered and checks if the password the user has entered is the one that is stored in the databse
-      // set JWT and send
-      var token = jwt.sign({
-        data: {
-          id: data._id, 
-          username: data.username,
-          basket: data.basket
-        }
-      }, private);
+        if (err){console.log('error', err)} // if theres a error, show in console
+        if (data.password==req.body.password){  // gets the password from the database linked to the username entered and checks if the password the user has entered is the one that is stored in the databse
+            // set JWT and send
+            var token = jwt.sign({
+                data: {
+                id: data._id, 
+                username: data.username,
+                basket: data.basket
+                }
+            }, private);
 
-      res.cookie('token', token, {  // save to frontend as cookie
-        Only: true
-      }).sendStatus(200);
-      // tells frontend that login was successful
-    } else {
-      res.sendStatus(400); // tells frontend password is incorrect
-    }
-  });
+            res.cookie('token', token, {  // save to frontend as cookie
+                Only: true
+            }).sendStatus(200);
+            // tells frontend that login was successful
+        } else {
+            res.sendStatus(400); // tells frontend password is incorrect
+        }
+    });
 });
 
 // logout
@@ -242,15 +241,56 @@ app.use('/user/logout', (req, res) => {
  *          description: Invalid
  */
 app.use('/user/verify', (req, res) => {
-  // get token and see if the token is valid so that the user can continue with their action
-  jwt.verify(req.cookies.token, private, (err, decoded) => {
-    if (err) { // if token is invalid, tell frontend that
-      res.sendStatus(400);
-    };
-    if (decoded) {  // get the data from the JWT so that 
-      res.status(200).send(decoded.data);  // tells frontend that the JWT is valid and send the decoded message
-    }
-  })
+    // get token and see if the token is valid so that the user can continue with their action
+    jwt.verify(req.cookies.token, private, (err, decoded) => {
+        if (err) { // if token is invalid, tell frontend that
+            res.sendStatus(400);
+        };
+        if (decoded) {  // get the data from the JWT so that 
+            console.log(decoded.data);
+            res.status(200).send(decoded.data);  // tells frontend that the JWT is valid and send the decoded message
+        }
+    })
+});
+
+
+// update basket of user
+/**
+ *  @swagger
+ *  /user/basket:
+ *    get:
+ *      tags:
+ *        - user
+ *      description: update the basket
+ *      parameters:
+ *        - name: basket
+ *          in: formData
+ *          description:  What basket should update to
+ *          required: true
+ *      responses:
+ *        200:
+ *          description: Basket updated
+ *        400:
+ *          description: Basked not updated
+ */
+app.use('/user/basket', (req, res) => {
+    console.log(req.body.basket)
+    var user = mongoose.model('User', userLoginSchema); // get database information
+    jwt.verify(req.cookies.token, private, (err, decoded) => {
+        console.log(decoded.data.username);
+        user.updateOne({_id: decoded.data.id}, {$set: {basket: req.body.basket}}) // update in backend
+
+        var token = jwt.sign({  // update frontend jwt basket
+            data: {
+              id: decoded.data._id, 
+              username: decoded.data.username,
+              basket: req.body.basket
+            }
+        }, private);
+        res.cookie('token', token, {  // save to frontend as cookie
+            Only: true
+        }).sendStatus(200);
+    });
 });
 
 
@@ -306,34 +346,34 @@ app.use('/user/verify', (req, res) => {
  *        - multipart/form-data
  */
 app.post('/shop/create', upload.single('image'), (req, res) => {
-  console.log(req.file);
-  var img = fs.readFileSync(req.file.path);
-  
-  // unique ID for the image that has to be stored into the imageURL array also in the product
-  if (req.cookies.token) {
-    jwt.verify(req.cookies.token, private, (err, decoded) => {
+    console.log(req.file);
+    var img = fs.readFileSync(req.file.path);
+    
+    // unique ID for the image that has to be stored into the imageURL array also in the product
+    if (req.cookies.token) {
+        jwt.verify(req.cookies.token, private, (err, decoded) => {
 
-      // add item to shop
-      var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
-      
-      shop.create({
-        name: req.body.name,
-        description: req.body.description,
-        category: req.body.category,
-        price: req.body.price,
-        imageURL: [{
-            base64: img.toString('base64'), 
-            mimetype: req.file.mimetype
-        }],   // append more images but this is for a single image for now due to Swagger limitations
-        tags: req.body.tags,
-        hidden: req.body.hidden,
-        seller: decoded.data.username,  // whatever the user is logged in as while registering the item
-      });
-    });
-    res.sendStatus(200);
-  } else { 
-    res.sendStatus(400); // not logged in so no seller can be set
-  }
+        // add item to shop
+        var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
+        
+        shop.create({
+            name: req.body.name,
+            description: req.body.description,
+            category: req.body.category,
+            price: req.body.price,
+            imageURL: [{
+                base64: img.toString('base64'), 
+                mimetype: req.file.mimetype
+            }],   // append more images but this is for a single image for now due to Swagger limitations
+            tags: req.body.tags,
+            hidden: req.body.hidden,
+            seller: decoded.data.username,  // whatever the user is logged in as while registering the item
+        });
+        });
+        res.sendStatus(200);
+    } else { 
+        res.sendStatus(400); // not logged in so no seller can be set
+    }
 });
 
 // get list of items within the category
@@ -357,13 +397,13 @@ app.post('/shop/create', upload.single('image'), (req, res) => {
  *          description: Invalid category
  */
 app.use('/shop/category/:category', (req, res) => {
-  console.log(req.params.category);
-  var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
-  shop.find({category: req.params.category}, (err, docs) => {
-    if (err) {console.log(err)};
-    res.status(200).send(docs);
-    console.log(docs);
-  })
+    console.log(req.params.category);
+    var shop = mongoose.model('Shop', shopItemSchema);  // get shop database
+    shop.find({category: req.params.category}, (err, docs) => {
+        if (err) {console.log(err)};
+        res.status(200).send(docs);
+        console.log(docs);
+    })
 });
 
 // get list of categories
@@ -414,15 +454,56 @@ app.use('/shop/category', (req, res) => {
  *          description: Invalid item
  */
 app.use('/shop/item/:id', (req, res) => {
-  var shop = mongoose.model('Shop', shopItemSchema);
-  shop.findOne({_id: req.params.id}, (err, docs) => {
-    if (docs) { // if item is found, send the item information
-      res.status(200).send(docs);
-    } else {    // if no item is there, send 400
-      res.sendStatus(400);
-    }
-  });
+    var shop = mongoose.model('Shop', shopItemSchema);
+    shop.findOne({_id: req.params.id}, (err, docs) => {
+        if (docs) { // if item is found, send the item information
+            res.status(200).send(docs);
+        } else {    // if no item is there, send 400
+            res.sendStatus(400);
+        }
+    });
 });
+
+// get multiple item information by IDs
+/**
+ *  @swagger
+ *  /shop/getItems:
+ *    get:
+ *      tags:
+ *        -  store
+ *      description: Get multiple items from array of IDs
+ *      parameters:
+ *        - name: IDs
+ *          in: formData
+ *          required: false
+ *          type: array
+ *          items:
+ *            type: string
+ *      responses:
+ *        200:  
+ *          description: Items found
+ *        400:
+ *          description: No items found
+ */
+app.use('/shop/getItems', (req, res) => {
+    var shop = mongoose.model('Shop', shopItemSchema);
+    jwt.verify(req.cookies.token, private, (err, decoded) => {
+        var basket = decoded.data.basket;
+        var tmp = []
+        for (i=0;i<basket.length;i++) { // get only IDs
+            tmp.push(basket[i][0])
+        };
+        
+        shop.find({'_id':{$in: tmp}}, (err, doc) => {   // query to find multiple items by id
+            if (err) {res.sendStatus(400)};
+            tmp = {};
+            for (i=0;i<doc.length;i++) {
+                tmp[doc[i]._id] = doc[i];
+            };
+            res.status(200).send(tmp);
+        })
+    });
+})
 
 // get items from seller
 /**
@@ -445,16 +526,16 @@ app.use('/shop/item/:id', (req, res) => {
  *          description: Invalid seller
  */
 app.post('/shop/user/:seller', (req, res) => {
-  var shop = mongoose.model('Shop', shopItemSchema);
-  console.log(req.params.seller)
-  shop.find({seller: req.params.seller}, (err, docs) => {
-    console.log(docs);
-    if (docs) { // if items from seller are found, send the item information
-      res.status(200).send(docs);
-    } else {    // if invalid seller, send 400
-      res.sendStatus(400);
-    }
-  })
+    var shop = mongoose.model('Shop', shopItemSchema);
+    console.log(req.params.seller)
+    shop.find({seller: req.params.seller}, (err, docs) => {
+        console.log(docs);
+        if (docs) { // if items from seller are found, send the item information
+            res.status(200).send(docs);
+        } else {    // if invalid seller, send 400
+            res.sendStatus(400);
+        }
+    })
 });
 
 
@@ -511,59 +592,59 @@ app.post('/shop/user/:seller', (req, res) => {
  *          description: Item changes not saved
  */
 app.post('/shop/edit/:id', upload.single('image'), (req, res) => {
-  console.log(req.file);
-  console.log(req.body);
-  update = JSON.parse(JSON.stringify(req.body))
-  try {
+    console.log(req.file);
+    console.log(req.body);
+    update = JSON.parse(JSON.stringify(req.body))
+    try {
 
-    if (req.file) {
-      var img = fs.readFileSync(req.file.path);
-      var id = new mongoose.Types.ObjectId();
-      var image = mongoose.model('images', base64ImageSchema);
-      image.create({
-        base64: img.toString('base64'),
-        mimetype: req.file.mimetype,
-        _id: id
-      });
-      
-      update.imageURL = [id];
+        if (req.file) {
+            var img = fs.readFileSync(req.file.path);
+            var id = new mongoose.Types.ObjectId();
+            var image = mongoose.model('images', base64ImageSchema);
+            image.create({
+                base64: img.toString('base64'),
+                mimetype: req.file.mimetype,
+                _id: id
+            });
+            
+            update.imageURL = [id];
+        }
+    } catch(e) {console.log(e)};
+        
+    console.log('update: ', update)
+    // validate that user is logged in as seller
+    console.log(req.cookies.token);
+
+    if (req.cookies.token) {
+        var shop = mongoose.model('Shop', shopItemSchema);
+        shop.updateOne({_id: req.params.id}, update, (err) => {
+            if(err){
+                console.log(err)
+            }
+        });
+        
+        //shop.updateOne({_id: req.params.id}, update)
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(400) // not logged in, no permission
     }
-  } catch(e) {console.log(e)}
-    
-  console.log('update: ', update)
-  // validate that user is logged in as seller
-  console.log(req.cookies.token);
-
-  if (req.cookies.token) {
-    var shop = mongoose.model('Shop', shopItemSchema);
-    shop.updateOne({_id: req.params.id}, update, (err) => {
-      if(err){
-        console.log(err)
-      }
-    });
-    
-    //shop.updateOne({_id: req.params.id}, update)
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(400) // not logged in, no permission
-  }
 });
 
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  next(createError(404));
+    next(createError(404));
 });
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 module.exports = app;

@@ -10,8 +10,7 @@ const Navigationbar = () => {
     function totalBasket() {
         var total = 0;
         for (var i=0; i<user.userdata.basket.length; i++) {
-            total = total + user.userdata.basket[i][1];
-            console.log(user.userdata.basket[i][1])
+            total += user.userdata.basket[i][1];
         }
         return total;
     }

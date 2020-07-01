@@ -28,7 +28,6 @@ function App() {
                 withCredentials: true
             })
                 .then(res => {
-                    console.log(res.data)
                     setUser({userdata: res.data, isLogged: true});
                 })
                 .catch(e => {   

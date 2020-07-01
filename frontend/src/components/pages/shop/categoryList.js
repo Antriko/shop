@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 const CategoryPage = props => {
     const [items, setItems] = useState([]);
-    const param = props.match.params.category
+    const param = props.match.params.category;
     useEffect(() => {
         const fetchData = async () => {
             await axios.get('http://localhost:3001/shop/category/'+param)

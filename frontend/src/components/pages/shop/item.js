@@ -30,11 +30,10 @@ const CategoryPage = props => {
         fetchData();
     }, [param]);
 
-    function updateBasket() {
+    const updateBasket = async () => {
         var tmp = user.userdata;
         var New = true;
         for (var i=0; i<tmp.basket.length; i++) {
-            console.log()
             if (tmp.basket[i][0] === param) {   // if already exists in basket, add another quantity
                 tmp.basket[i][1]++;
                 New = false;
@@ -45,6 +44,15 @@ const CategoryPage = props => {
         };
         console.log(tmp)
         setUser({userdata: tmp, isLogged: user.isLogged});
+
+        await axios.post('http://localhost:3001/user/basket', {
+            basket: tmp.basket
+        }, {
+            withCredentials: true
+        })
+            .then(res => {
+                console.log(res);
+            })
     };
 
     return(<React.Fragment>
