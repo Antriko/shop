@@ -631,6 +631,36 @@ app.post('/shop/edit/:id', upload.single('image'), (req, res) => {
 });
 
 
+// seach query
+/**
+ *  @swagger
+ *  /search/{query}:
+ *    get:
+ *      tags:
+ *        -  store
+ *      description: Search query for items
+ *      parameters:
+ *        - name: query
+ *          in: path
+ *          required: true
+ *          schema:
+ *            type: string
+ *      responses:
+ *        200:  
+ *          description: Query sent
+ *        400:
+ *          description: Query error
+ */
+app.use('/search/:query', (req, res) => {
+    console.log(req.params.query);
+    var shop = mongoose.model('Shop', shopItemSchema);
+    shop.find( {name: { $regex: req.params.query} } , (err, docs) => {
+        if (err) {console.log(err);res.sendStatus(400)};
+        res.status(200).send(docs);
+    });
+});
+
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     next(createError(404));

@@ -46,10 +46,10 @@ const CategoryPage = props => {
         setUser({userdata: tmp, isLogged: user.isLogged});
 
         await axios.post('http://localhost:3001/user/basket', {
-            basket: tmp.basket
-        }, {
-            withCredentials: true
-        })
+                basket: tmp.basket
+            }, {
+                withCredentials: true
+            })
             .then(res => {
                 console.log(res);
             })

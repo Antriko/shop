@@ -10,6 +10,7 @@ import loginPage from './components/pages/user/login.js';
 import logoutPage from './components/pages/user/logout.js';
 import basketPage from './components/pages/user/basket.js'
 
+import searchPage from './components/pages/shop/searchPage.js';
 import categoryPage from './components/pages/shop/category.js';
 import categoryList from './components/pages/shop/categoryList.js'
 import shopItem from './components/pages/shop/item.js'
@@ -49,6 +50,7 @@ function App() {
                                 <Route exact path="/login" component={loginPage} />
                                 <Route exact path="/logout" component={logoutPage} />
 
+                                <Route exact path="/search/:search" component={searchPage} />
                                 <Route exact path="/category/" component={categoryPage} />
                                 <Route exact path="/category/:category" component={categoryList} />
                                 <Route exact path="/shop/:id" component={shopItem} />
